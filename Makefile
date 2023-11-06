@@ -2,7 +2,7 @@
 HIPCC = hipcc
 
 # Source files and output binary
-SRCS = hello_world.cpp
+SRCS = main.cpp
 OUT = hello_world
 
 # Compilation flags
