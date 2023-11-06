@@ -9,7 +9,7 @@ SRCS = main.cpp
 OUT = hello_world
 
 # Compilation flags
-CXXFLAGS = -std=c++11 -I$(HIP_INCLUDE_DIR)
+CXXFLAGS = -std=c++11 --rocm-path=$(ROCM_INSTALL_DIR) -I$(HIP_INCLUDE_DIR)
 
 all: $(OUT)
 
