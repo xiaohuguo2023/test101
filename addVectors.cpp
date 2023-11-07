@@ -2,14 +2,23 @@
 #include <hip/hip_runtime.h>
 #include <vector>
 
-__global__ void addVectors(int* a, int *b, int* result, int n){
+#define HIP_CHECK(command){  \
+	hipError_t status = command ; \
+	if(status!=hipSuccess){       \
+	 std::cerr << "Error: HIP reports " << hipGetErrorString(status) << std::endl; \
+	 std::abort();}}
+
+__global__ void addVectors(int* a, int* b, int* result, int n){
+
 	int tid=threadIdx.x+ blockIdx.x * blockDim.x;
+
 	if(tid <n){
-	   result(tid)= a[tid] + b[tid];
+	   result[tid]= a[tid] + b[tid];
 	}
 }
 
-bool check_result(const std::vector<int>& result, const std::vector<int>& A, std::vector<int>&, B){
+bool check_result(const std::vector<int>& result, const std::vector<int>& A, std::vector<int>& B){
+
 	for(int i=0; i<result.size(); i++){
 	   if(result[i] != A[i]+B[i]){
 	      return false;
@@ -59,11 +68,11 @@ int main() {
     HIP_CHECK(hipMemcpy(hostC.data(), deviceC, n*sizeof(n), hipMemcpyDeviceToHost));
 
 
-    if(checkResults(hostC, hostA, hostB)){
-      std::cout << "result match between host and device";
+    if(check_result(hostC, hostA, hostB)){
+      std::cout << "result match between host and device" << std::endl;
     }
     else{
-      std::cout << "result do not match between host and device";
+      std::cout << "result do not match between host and device"<< std::endl;
     }
 
 
