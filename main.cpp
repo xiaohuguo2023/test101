@@ -1,26 +1,22 @@
 #include <iostream>
 #include <hip/hip_runtime.h>
 
-__global__ void helloWorld() {
-    printf("Hello, World from GPU thread %d\n", threadIdx.x);
+__global__ void helloWorldKernel() {
+    printf("Hello, World from GPU thread %d\n", hipThreadIdx_x);
 }
 
 int main() {
-    int deviceId = 0;  // Use the first available GPU device
-    hipSetDevice(deviceId);
+    // Define the number of blocks and threads per block
+    int numBlocks = 2;
+    int threadsPerBlock = 128;
 
-    // Launch the kernel on the GPU
-    helloWorld<<<1, 256>>>();
-    hipDeviceSynchronize();  // Wait for the GPU to finish
+    // Launch the HIP kernel
+    hipLaunchKernelGGL(helloWorldKernel, dim3(numBlocks), dim3(threadsPerBlock), 0, 0);
 
-    // Check for any errors during the GPU execution
-    hipError_t err = hipGetLastError();
-    if (err != hipSuccess) {
-        std::cerr << "HIP error: " << hipGetErrorString(err) << std::endl;
-        return 1;
-    }
+    // Wait for the kernel to finish
+    hipDeviceSynchronize();
 
-    std::cout << "Hello, World from CPU!" << std::endl;
+    std::cout << "Hello, World from the CPU!" << std::endl;
 
     return 0;
 }
