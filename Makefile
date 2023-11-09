@@ -10,7 +10,7 @@ SRCS1 = addVectors.cpp
 SRCS2 = addVectsInlineAssembly.cpp
 OUT = hello_world
 OUT1= addvectors
-OUT1= addvectorsassembly
+OUT2= addvectorsassembly
 
 # Compilation flags
 CXXFLAGS = -std=c++11 --rocm-path=$(ROCM_INSTALL_DIR) -I$(HIP_INCLUDE_DIR)

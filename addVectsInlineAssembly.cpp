@@ -1,6 +1,7 @@
 #include <iostream>
 #include <hip/hip_runtime.h>
 #include <vector>
+#include <chrono>
 
 #define HIP_CHECK(command){  \
 	hipError_t status = command ; \
@@ -8,21 +9,21 @@
 	 std::cerr << "Error: HIP reports " << hipGetErrorString(status) << std::endl; \
 	 std::abort();}}
 
-__global__ void addVectors(int* a, int* b, int* result, int n){
+__global__ void addVectors(int* a, int* b, int* result, int n) {
+           int tid = blockIdx.x * blockDim.x + threadIdx.x;
+           int a_val, b_val, result_val;
 
-	int tid=threadIdx.x+ blockIdx.x * blockDim.x;
-
-	if(tid <n){
-	   int a_val, b_val, result_val;
-	   asm volatile("buffer_load_dword %0, %1_offset(0);" : "=v" (a_val) : "v" (a + tid));
-	   asm volatile("buffer_load_dword %0, %1_offset(0);" : "=v" (b_val) : "v" (b + tid));
-
-	   asm volatile("v_add_i32_e32 %0, %1, %2, 0;"
-			: "=v" (result_val) : "v" (a_val), "v" (b_val));
-	   asm volatile ("buffer_store_dword %0, %1_offset(0);"
-			:
-			: "v" (result_val), "v" (result + tid));
-	}
+           if (tid < n) {
+	      // Inline assembly using AMD GCN syntax
+	      asm volatile (
+                  "s_load_dwordx2 %0, %1;"
+		  "s_load_dwordx2 %2, %3;"
+		  "v_add_i32 %4, %0, %2;"
+		  "s_store_dwordx2 %5, %4;"
+		  : "=v"(a_val), "=s"(a[tid]), "=v"(b_val), "=s"(b[tid]), "=v"(result_val), "=s"(result[tid])
+	      );			 
+	      
+           }
 }
 
 bool check_result(const std::vector<int>& result, const std::vector<int>& A, std::vector<int>& B){
@@ -67,8 +68,13 @@ int main() {
     HIP_CHECK(hipMemcpy(deviceB, hostB.data(), n*sizeof(int), hipMemcpyHostToDevice));
 
     // Launch the HIP kernel
+    auto start_time = std::chrono::high_resolution_clock::now();
     hipLaunchKernelGGL(addVectors, dim3(numBlocks), dim3(threadsPerBlock), 0, 0, deviceA, deviceB, deviceC, n);
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    auto start_time1 = std::chrono::high_resolution_clock::now();
     addVectors<<< dim3(numBlocks), dim3(threadsPerBlock)>>>(deviceA, deviceB, deviceC, n);
+    auto end_time1 = std::chrono::high_resolution_clock::now();
     // Wait for the kernel to finish
     hipDeviceSynchronize();
 
@@ -83,6 +89,11 @@ int main() {
       std::cout << "result do not match between host and device"<< std::endl;
     }
 
+    std::chrono::duration<double> elapsed = end_time - start_time;
+    std::chrono::duration<double> elapsed1 = end_time1 - start_time1;
+
+    std::cout << "Kernel execution time: " << elapsed.count() * 1000 << " ms" << std::endl;
+    std::cout << "Kernel1 execution time: " << elapsed1.count() * 1000 << " ms" << std::endl;
 
     hipFree(deviceA);
     hipFree(deviceB);
