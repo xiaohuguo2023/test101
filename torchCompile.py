@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import time
 import functools
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 
 def timer(func):
     @functools.wraps(func)
@@ -35,17 +37,19 @@ def forward_pass(model, input_tensor):
 
 # Generate a random input tensor
 input_tensor = torch.randn(1, 10)  # Batch size of 1, input size of 10
+#model=torch.compile(SimpleMLP())
 model=SimpleMLP()
 
-output= forward_pass(model, input_tensor)
+output=forward_pass(model, input_tensor)
 
 # Measure the time taken for the forward pass
-start_time = time.time()
-output = model(input_tensor)
-end_time = time.time()
+#start_time = time.time()
+#output = model(input_tensor)
+#end_time = time.time()
 
 # Calculate the time taken
-run_time = end_time - start_time
+#run_time = end_time - start_time
 
-run_time, output.detach()
+#run_time
+output.detach()
 
