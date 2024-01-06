@@ -29,11 +29,11 @@ model.zero_grad()
 loss.backward()
 
 # Perform the convolution operation and proifle
-with profiler.profile(record_shapes=True, use_cuda=torch.cuda.is_available()) as prof:
-    with profiler.record_function("forward_pass"):
-         output_tensor = model(input_tensor)
+#with profiler.profile(record_shapes=True, use_cuda=torch.cuda.is_available()) as prof:
+#    with profiler.record_function("forward_pass"):
+#output_tensor = model(input_tensor)
 # Print profiler results
-print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+#print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
 
 
 # Display the shapes of input and output tensors
